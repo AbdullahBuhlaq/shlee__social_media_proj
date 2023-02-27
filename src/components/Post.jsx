@@ -1,13 +1,20 @@
 import $ from "jquery";
+import { useNavigate } from "react-router-dom";
 
 import calculateDate from "../functions/calculateDate";
 
 function Post(props) {
+  const navigate = useNavigate();
   return (
     <>
       <div className="post">
         <div className="post-header d-flex justify-content-between align-items-center">
-          <div className="d-flex align-items-center">
+          <div
+            className="d-flex align-items-center cursor"
+            onClick={() => {
+              navigate(`/profile/${props.friend._id}`);
+            }}
+          >
             <img className="navbar-profile-photo object-fit-scale" src={props.friend.picture != "" ? props.friend.picture : "/profile-photo.webp"} />
             <div className="d-flex flex-column">
               <span>
@@ -42,8 +49,9 @@ function Post(props) {
               ></i>
             )}
             <span
+              className="cursor"
               onClick={() => {
-                props.showLikeList(props.post.likes);
+                props.showLikeList(props.post.likes, props.setLikeList);
                 $(".reaction-list").slideDown();
               }}
             >
@@ -54,11 +62,12 @@ function Post(props) {
             <i
               className="fa-regular fa-message"
               onClick={() => {
-                props.showCommentList(props.post.comments, props.postId, props.friendIndex, props.postIndex);
+                props.showCommentList(props.post.comments, props.postId, props.friendIndex, props.postIndex, props.setCommentList);
                 $(".comment-list").slideDown();
               }}
             ></i>
             <span
+              className="cursor"
               onClick={() => {
                 props.showCommentList(props.post.comments);
                 $(".comment-list").slideDown();
@@ -69,7 +78,7 @@ function Post(props) {
           </div>
           <div className="d-flex align-items-center">
             <i className="fa-regular fa-share-from-square"></i>
-            <span>{props.post.shares.length}</span>
+            <span className="cursor">{props.post.shares.length}</span>
           </div>
         </div>
       </div>

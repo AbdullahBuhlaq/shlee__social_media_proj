@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const MediaFile = require("./MediaFile");
+
 const postSchema = new mongoose.Schema({
   text: { type: String, default: null },
   content: { type: [String], default: null },

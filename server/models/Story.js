@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-const MediaFile = require("./MediaFile");
 
 const storySchema = new mongoose.Schema({
   text: String,

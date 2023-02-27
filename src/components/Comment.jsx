@@ -3,17 +3,24 @@ import $ from "jquery";
 import { useRef } from "react";
 import { useEffect } from "react";
 import calculateDate from "../functions/calculateDate";
+import { useNavigate } from "react-router-dom";
 
 function Comment(props) {
   const [readMore, setReadMore] = useState(0);
+  const navigate = useNavigate();
   const ref = useRef();
   useEffect(() => {
-    !readMore && ref.current.clientHeight > 40 && setReadMore(1);
-  });
+    ref.current.clientHeight > 40 && setReadMore(1);
+  }, []);
   return (
     <div className="comment-container">
       <div className="post-header comment-header d-flex justify-content-between align-items-center">
-        <div className="d-flex align-items-center">
+        <div
+          className="d-flex align-items-center cursor"
+          onClick={() => {
+            navigate(`/profile/${props.item.ownerInfo._id}`);
+          }}
+        >
           <img className="navbar-profile-photo object-fit-scale" src={props.item.ownerInfo.picture} />
           <div className="d-flex flex-column">
             <span>
@@ -26,7 +33,22 @@ function Comment(props) {
         </div>
         <div className="comment-icons d-flex">
           <div className="d-flex">
-            {/* <i className="fa-regular fa-thumbs-up" onClick={() => {props.addCommentLike(props.item._id)}}></i> */}
+            {props.item.likes.includes(props.userInformation._id) ? (
+              <i
+                className="fa-solid fa-thumbs-up"
+                onClick={() => {
+                  props.removeCommentLike(props.item._id, props.index);
+                }}
+              ></i>
+            ) : (
+              <i
+                className="fa-regular fa-thumbs-up"
+                onClick={() => {
+                  props.addCommentLike(props.item._id, props.index);
+                }}
+              ></i>
+            )}
+
             <span>{props.item.likes.length}</span>
           </div>
           <div className="d-flex">

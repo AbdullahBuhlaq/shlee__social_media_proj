@@ -1,6 +1,7 @@
 :root{
     --navbar: #1e2240;
     --second: #F4EEFF;
+    --second-hover: #e8dcff;
 }
 *{
     margin: 0!important;
@@ -53,6 +54,10 @@ i:hover{
 
 img:not(img[src^="/icon"]){
     background-color: white
+}
+
+.cursor:hover{
+    cursor: pointer;
 }
 
 /* register page-------------------------------------------------------------------------------------------------------------------- */
@@ -297,7 +302,7 @@ img:not(img[src^="/icon"]){
 }
 
 .navbar{
-    padding-top: 1.5%;
+    padding-top: 20px;
     padding-bottom: 0;
 }
 
@@ -544,12 +549,17 @@ img:not(img[src^="/icon"]){
 
 /* body */
 
+.body{
+    height: calc(100% - 70px);
+}
+
 .left-side,
 .right-side{
     width: 20%;
     height: 100%;
     background-color: #F4EEFF;
     display: inline-block;
+    overflow-y: auto;
 }
 
 .middle-side{
@@ -770,6 +780,7 @@ img:not(img[src^="/icon"]){
     color: var(--navbar);
     border-radius: 15px 15px 0 0;
     box-shadow: 0px -7px 7px -3px #999;
+    z-index: 30;
 }
 
 .reaction-list-header,
@@ -843,8 +854,8 @@ img:not(img[src^="/icon"]){
     background-image: linear-gradient(45deg, black, white);
     background-position: bottom;
     background-repeat: repeat-x;
-    background-size: 100% 2px;
-    padding-bottom: 2px;
+    background-size: 100% 1px;
+    padding-bottom: 1px;
 }
 
 .comment-header{
@@ -889,10 +900,182 @@ img:not(img[src^="/icon"]){
     object-fit: cover;
     width: 40%;
     aspect-ratio: 1 / 1;
-    margin: 1% 0!important;
+    margin: 1% 0 3% 0!important;
     border-radius: 10px;
+    box-shadow: 0px 5px 2px 1px #999;
 }
 
 .comment-icons div:nth-child(2){
     margin: 0 10px!important;
+}
+
+/* profile //////////////////////////////////////////////////////////////////////////////////////  */
+
+.profile-cover{
+    height: 135px;
+    width: 100%;
+    background-color: blue;
+    position: relative;
+}
+
+.profile-cover img:nth-child(1){
+    object-fit: cover;
+    height: 100%;
+    width: 100%;
+}
+
+.profile-cover img:nth-child(2){
+    position: absolute;
+    height: inherit;
+    width: auto;
+    aspect-ratio: 1 / 1;
+    top: 25px;
+    left: calc( 50% - 67.5px);
+}
+
+.profile-options{
+    height: 50px;
+    width: 100%;
+    background-color: var(--second);
+    color: var(--navbar);
+}
+
+.profile-options>div{
+    width: 0;
+}
+
+.profile-options-left div,
+.profile-options-right div{
+    margin: 0 5%!important;
+}
+
+.profile-navbar{
+    height: 50px;
+    width: 100%;
+    background-color: var(--navbar);
+    position: relative;
+    z-index: 20;
+}
+
+.profile-navbar div{
+    margin: 0 2%!important;
+    position: relative;
+    cursor: pointer;
+}
+
+.profile-navbar div:not(.profile-current-tab){
+    font-weight: 200;
+}
+
+.profile-navbar div:not(.profile-current-tab):hover{
+    opacity: 0.8;
+}
+
+.profile-current-tab{
+    color: rgb(255, 128, 0);
+    font-weight: 500;
+}
+
+.profile-current-tab::after{
+    position: absolute;
+    content: '';
+    width: 100%;
+    height: 2px;
+    bottom: -13px;
+    right: 0;
+    background-color: rgb(255, 128, 0);
+}
+
+.profile-body{
+    width: 100%;
+}
+
+.profile-info>div{
+    height: max-content;
+    width: 100%;
+    padding: 2%;
+    color: rgb(102, 101, 101);
+    border-bottom: solid 1px var(--navbar);
+    font-size: 14px;
+}
+
+.profile-info-one-line>div{
+    width: 0;
+}
+
+.profile-item>span{
+    font-size: 15px;
+    color: black;
+}
+
+.profile-item>div{
+    max-width: 80%;
+    text-align: center;
+}
+
+/* chat/////////////////////////////////////////////////////////////////////////////////////////////////// */
+
+.chat-item{
+    width: 100%;
+    height: 50px;
+    font-size: 14px;
+}
+
+.chat-item:hover{
+    cursor: pointer;
+    background-color: var(--second-hover);
+}
+
+.chat-item span,
+.chat-item div{
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+    white-space: pre-wrap;
+}
+
+.chat-item-first{
+    height: 100%;
+    aspect-ratio: 1 / 1;
+    padding: 2%;
+}
+
+.chat-item-first>img{
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.chat-item-middle{
+    width: calc(100% - 100px);
+}
+
+.chat-item-middle>div{
+    opacity: 0.75;
+}
+
+.chat-item-last{
+    height: 100%;
+    min-width: 60px;
+    font-size: 11px;
+}
+
+.new-messages-number{
+    background-color: var(--bs-link-color);
+    color: white;
+    border-radius: 15px;
+    padding: 1% 10%;
+}
+
+
+.chat-header{
+    background-color: red;
+    height: 45px;
+}
+
+.chat-footer{
+    background-color: blue;
+    height: 45px;
 }

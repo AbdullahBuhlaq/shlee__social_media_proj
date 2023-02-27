@@ -1,6 +1,8 @@
 import $ from "jquery";
+import { useNavigate } from "react-router-dom";
 
 function ReactionList(props) {
+  const navigate = useNavigate();
   return (
     <div className="reaction-list" style={{ display: "none" }}>
       <div className="reaction-list-header d-flex justify-content-center align-items-center">
@@ -19,8 +21,29 @@ function ReactionList(props) {
         {props.likeList.map((user, index) => {
           return (
             <div key={index} className="d-flex justify-content-start align-items-center like-list-item">
-              {user.picture ? <img className="navbar-profile-photo object-fit-scale" src={user.picture} /> : <img className="navbar-profile-photo object-fit-scale" src="/profile-photo.webp" />}
-              <div className="d-flex flex-column">
+              {user.picture ? (
+                <img
+                  className="navbar-profile-photo object-fit-scale cursor"
+                  src={user.picture}
+                  onClick={() => {
+                    navigate(`/profile/${user._id}`);
+                  }}
+                />
+              ) : (
+                <img
+                  className="navbar-profile-photo object-fit-scale cursor"
+                  src="/profile-photo.webp"
+                  onClick={() => {
+                    navigate(`/profile/${user._id}`);
+                  }}
+                />
+              )}
+              <div
+                className="d-flex flex-column cursor"
+                onClick={() => {
+                  navigate(`/profile/${user._id}`);
+                }}
+              >
                 <span className="search-result-name">
                   {user.firstName} {user.lastName}
                 </span>

@@ -1,7 +1,4 @@
 const mongoose = require("mongoose");
-const MediaFile = require("./MediaFile");
-// const { postSchema } = require("./Post");
-// const { storySchema } = require("./Story");
 
 const userSchema = new mongoose.Schema({
   userName: { type: String, required: true, unique: true },
@@ -15,6 +12,7 @@ const userSchema = new mongoose.Schema({
   friends: [this],
   posts: { type: [mongoose.Schema.ObjectId], default: [] },
   stories: [mongoose.Schema.ObjectId],
+  chats: [mongoose.Schema.ObjectId],
 });
 
 const User = mongoose.model("User", userSchema);

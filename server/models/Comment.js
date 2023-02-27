@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-const MediaFile = require("./MediaFile");
 
 const commentSchema = new mongoose.Schema({
   owner: mongoose.Schema.ObjectId,

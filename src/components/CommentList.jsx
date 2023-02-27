@@ -25,7 +25,7 @@ function CommentList(props) {
   };
 
   async function addComment() {
-    if (!(photo.value == "" && commentText == "")) {
+    if (!(photo.value === "" && commentText === "")) {
       let token = localStorage.getItem("token");
       let infoRequestOptions = {
         ...requestOptions,
@@ -51,24 +51,40 @@ function CommentList(props) {
     }
   }
 
-  // async function addCommentLike(commentId){
-  //   let token = localStorage.getItem("token");
-  //     let infoRequestOptions = {
-  //       ...requestOptions,
-  //       headers: { ...requestOptions.headers, "x-auth-token": token },
-  //       body: JSON.stringify({
-  //         commentId: commentId,
-  //       }),
-  //     };
-  //     let response = await fetch("/addCommentLike", infoRequestOptions);
-  //     let data = await response.json();
-  //     if (data.result === "Done") {
-  //       setCommentText("");
-  //       setPhoto({ value: "", name: "", type: "" });
-  //       $(".add-new-comment").css("height", "auto");
-  //     }
-  //     setAnimate(false);
-  // }
+  async function addCommentLike(commentId, commentIndex) {
+    let token = localStorage.getItem("token");
+    let infoRequestOptions = {
+      ...requestOptions,
+      headers: { ...requestOptions.headers, "x-auth-token": token },
+      body: JSON.stringify({
+        commentId: commentId,
+      }),
+    };
+    let response = await fetch("/addCommentLike", infoRequestOptions);
+    let data = await response.json();
+    if (data.result === "done") {
+      props.commentList.comments[commentIndex].likes.push(props.userInformation._id);
+      props.setCommentList({ ...props.commentList });
+    }
+  }
+
+  async function removeCommentLike(commentId, commentIndex) {
+    let token = localStorage.getItem("token");
+    let infoRequestOptions = {
+      ...requestOptions,
+      headers: { ...requestOptions.headers, "x-auth-token": token },
+      body: JSON.stringify({
+        commentId: commentId,
+      }),
+    };
+    let response = await fetch("/removeCommentLike", infoRequestOptions);
+    let data = await response.json();
+    if (data.result === "done") {
+      let index = props.commentList.comments[commentIndex].likes.indexOf(props.userInformation._id);
+      props.commentList.comments[commentIndex].likes.splice(index, 1);
+      props.setCommentList({ ...props.commentList });
+    }
+  }
 
   return (
     <div className="comment-list flex-column" style={{ display: "none" }}>
@@ -88,7 +104,7 @@ function CommentList(props) {
       <div className="d-flex flex-column comment-list-body">
         <div className="comments">
           {props.commentList.comments.map((item, index) => {
-            return <Comment key={index} item={item} />;
+            return <Comment key={index} index={index} item={item} addCommentLike={addCommentLike} removeCommentLike={removeCommentLike} userInformation={props.userInformation} />;
           })}
         </div>
       </div>

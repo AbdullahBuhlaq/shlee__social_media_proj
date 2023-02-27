@@ -145,6 +145,16 @@ app.post("/login", async (req, res) => {
   }
 });
 
+app.post("/getProfileInformation", async (req, res) => {
+  try {
+    const user = await User.findById(req.body.id);
+    res.send(JSON.stringify({ result: user }));
+  } catch (error) {
+    console.log(error);
+    res.send(JSON.stringify({ result: error }));
+  }
+});
+
 app.post("/getUserInformation", auth, async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
@@ -159,6 +169,22 @@ app.post("/getPosts", auth, async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
     const friendsPostsIds = await User.find({ _id: { $in: user.friends } }).select("posts picture firstName lastName userName _id");
+    const friendsPosts = await Promise.all(
+      friendsPostsIds.map(async (obj) => {
+        const posts = await Post.find({ _id: { $in: obj.posts } });
+        return { userName: obj.userName, firstName: obj.firstName, lastName: obj.lastName, picture: obj.picture, _id: obj._id, posts: posts };
+      })
+    );
+    res.send(JSON.stringify({ result: friendsPosts }));
+  } catch (error) {
+    console.log(error);
+    res.send(JSON.stringify({ result: error }));
+  }
+});
+
+app.post("/getProfilePosts", async (req, res) => {
+  try {
+    const friendsPostsIds = await User.find({ _id: req.body.id }).select("posts picture firstName lastName userName _id");
     const friendsPosts = await Promise.all(
       friendsPostsIds.map(async (obj) => {
         const posts = await Post.find({ _id: { $in: obj.posts } });
@@ -231,7 +257,6 @@ app.post("/removeFriend", auth, async (req, res) => {
 app.post("/addLike", async (req, res) => {
   try {
     const add = await Post.updateOne({ _id: req.body.postId }, { $addToSet: { likes: req.body.userId } });
-    console.log(add);
     res.send(JSON.stringify({ result: add.modifiedCount ? "done" : "duplicate" }));
   } catch (error) {
     console.log(error);
@@ -295,6 +320,26 @@ app.post("/addComment", auth, async (req, res) => {
 
     const update = await Post.updateOne({ _id: req.body.postId }, { $push: { comments: insert[0]._id } });
     res.send(JSON.stringify({ result: "Done", comment: insert[0] }));
+  } catch (error) {
+    console.log(error);
+    res.send(JSON.stringify({ result: "error in server" }));
+  }
+});
+
+app.post("/removeCommentLike", auth, async (req, res) => {
+  try {
+    const removeLike = await Comment.updateOne({ _id: req.body.commentId }, { $pull: { likes: req.user.id } });
+    res.send(JSON.stringify({ result: removeLike.modifiedCount ? "done" : "duplicate" }));
+  } catch (error) {
+    console.log(error);
+    res.send(JSON.stringify({ result: "error in server" }));
+  }
+});
+
+app.post("/addCommentLike", auth, async (req, res) => {
+  try {
+    const addLike = await Comment.updateOne({ _id: req.body.commentId }, { $addToSet: { likes: req.user.id } });
+    res.send(JSON.stringify({ result: addLike.modifiedCount ? "done" : "duplicate" }));
   } catch (error) {
     console.log(error);
     res.send(JSON.stringify({ result: "error in server" }));

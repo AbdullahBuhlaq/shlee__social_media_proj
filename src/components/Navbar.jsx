@@ -102,8 +102,29 @@ function Navbar(props) {
                       if (item._id !== props.userInformation._id)
                         return (
                           <div key={index} className="d-flex justify-content-start align-items-center search-result-item">
-                            {item.picture ? <img className="navbar-profile-photo object-fit-scale" src={item.picture} /> : <img className="navbar-profile-photo object-fit-scale" src="/profile-photo.webp" />}
-                            <div className="d-flex flex-column">
+                            {item.picture ? (
+                              <img
+                                className="navbar-profile-photo object-fit-scale cursor"
+                                src={item.picture}
+                                onClick={() => {
+                                  navigate(`/profile/${item._id}`);
+                                }}
+                              />
+                            ) : (
+                              <img
+                                className="navbar-profile-photo object-fit-scale cursor"
+                                src="/profile-photo.webp"
+                                onClick={() => {
+                                  navigate(`/profile/${item._id}`);
+                                }}
+                              />
+                            )}
+                            <div
+                              className="d-flex flex-column cursor"
+                              onClick={() => {
+                                navigate(`/profile/${item._id}`);
+                              }}
+                            >
                               <span className="search-result-name">
                                 {item.firstName} {item.lastName}
                               </span>
@@ -123,7 +144,12 @@ function Navbar(props) {
               <NavbarItems />
             </div>
             <div className={"navbar-middle-last flex-grow-1 " + (props.current === TAB.length - 1 ? "right-current" : "")}>
-              <div className="position-absolute top-50 end-0 translate-middle-y d-flex h-auto navbar-profile">
+              <div
+                className="position-absolute top-50 end-0 translate-middle-y d-flex h-auto navbar-profile cursor"
+                onClick={() => {
+                  navigate(`/profile/${props.userInformation._id}`);
+                }}
+              >
                 <span className="navbar-user-name position-absolute top-50 translate-middle-y">{props.userInformation ? props.userInformation.userName : ""}</span>
                 <img className="navbar-profile-photo object-fit-scale" src={props.userInformation && props.userInformation.picture ? props.userInformation.picture : "/profile-photo.webp"} />
               </div>

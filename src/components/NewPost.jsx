@@ -1,11 +1,21 @@
 import $ from "jquery";
+import { useEffect } from "react";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 function NewPost(props) {
+  const navigate = useNavigate();
+
   return (
     <>
       <div className="post">
         <div className="post-header d-flex justify-content-between align-items-center">
-          <div className="d-flex align-items-center">
+          <div
+            className="d-flex align-items-center cursor"
+            onClick={() => {
+              navigate(`/profile/${props.userInformation._id}`);
+            }}
+          >
             <img className="navbar-profile-photo object-fit-scale" src={props.userInformation.picture ? props.userInformation.picture : "/profile-photo.webp"} alt="" />
             <div className="d-flex flex-column">
               <span>
