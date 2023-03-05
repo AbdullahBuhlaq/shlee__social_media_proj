@@ -7,6 +7,7 @@ function Home() {
   const [current, setCurrent] = useState(0);
   const [loadingUser, setLoadingUser] = useState(true);
   const [loadingPosts, setLoadingPosts] = useState(true);
+  const [loadingChats, setLoadingChats] = useState(true);
   const [loggedIn, setLoggedIn] = useState(false);
   const [duringEditFriend, setDuringEditFriend] = useState([]);
 
@@ -54,6 +55,23 @@ function Home() {
     getPosts();
   }, {});
 
+  async function getChats() {
+    let token = localStorage.getItem("token");
+    if (token) {
+      let infoRequestOptions = {
+        ...requestOptions,
+        headers: { ...requestOptions.headers, "x-auth-token": token },
+      };
+      let response = await fetch("/getChats", infoRequestOptions);
+      let data = await response.json();
+      setChats(data.result);
+      setLoadingChats(false);
+    }
+  }
+  const [chats, setChats] = useState(() => {
+    getChats();
+  }, []);
+
   async function addFriend(id) {
     if (!userInformation.friends.includes(id)) {
       let token = localStorage.getItem("token");
@@ -98,6 +116,27 @@ function Home() {
     }
   }
 
+  async function addMessage(text, friendId, chatId, currentChat) {
+    if (text) {
+      let token = localStorage.getItem("token");
+      let infoRequestOptions = {
+        ...requestOptions,
+        headers: { ...requestOptions.headers, "x-auth-token": token },
+        body: JSON.stringify({
+          text: text,
+          friendId: friendId,
+          chatId: chatId,
+        }),
+      };
+      console.log('hello');
+      // chats[currentChat].messages.push({ownerName: userInformation.userName, ownerId: userInformation._id, text: text, content: null, date: Date.now, sent: false, recieved: false, read: false })
+      // setChats(chats)
+      let response = await fetch("/addMessage", infoRequestOptions);
+      let data = await response.json();
+      if (data.result === "done") console.log("done");
+    }
+  }
+
   return (
     <>
       {loadingUser ? (
@@ -105,7 +144,17 @@ function Home() {
       ) : (
         <div className="vh-100 d-flex flex-column">
           <Navbar addFriend={addFriend} removeFriend={removeFriend} duringEditFriend={duringEditFriend} loggedIn={loggedIn} userInformation={userInformation} setUserInformation={setUserInformation} current={current} setCurrent={setCurrent} />
-          {!loggedIn ? <span>login</span> : current === 0 ? <Posts addFriend={addFriend} removeFriend={removeFriend} duringEditFriend={duringEditFriend} loadingPosts={loadingPosts} posts={posts} setPosts={setPosts} userInformation={userInformation} setUserInformation={setUserInformation} /> : current === 1 ? <Chat /> : current === 2 ? "story" : "trend"}
+          {!loggedIn ? (
+            <span>login</span>
+          ) : current === 0 ? (
+            <Posts addFriend={addFriend} removeFriend={removeFriend} duringEditFriend={duringEditFriend} loadingPosts={loadingPosts} posts={posts} setPosts={setPosts} userInformation={userInformation} setUserInformation={setUserInformation} />
+          ) : current === 1 ? (
+            <Chat loadingChats={loadingChats} userInformation={userInformation} chats={chats} setChats={setChats} addMessage={addMessage} />
+          ) : current === 2 ? (
+            "story"
+          ) : (
+            "trend"
+          )}
         </div>
       )}
     </>

@@ -16,6 +16,7 @@ const auth = require("./middleware/auth");
 const User = require("./models/User");
 const Comment = require("./models/Comment");
 const { Post } = require("./models/Post");
+const Chat = require("./models/Chat");
 
 //////////// init section ////////////////////////////////////////////////////
 
@@ -182,6 +183,36 @@ app.post("/getPosts", auth, async (req, res) => {
   }
 });
 
+app.post("/getChats", auth, async (req, res) => {
+  try {
+    const user = await User.find({ _id: req.user.id }).select("chats");
+    const chats = await Chat.find({ _id: { $in: user[0].chats } });
+    const chatsWithFriendInfo = await Promise.all(
+      chats.map(async (obj) => {
+        const id = obj.chatters[0] != req.user.id ? obj.chatters[0] : obj.chatters[1];
+        const friend = await User.find({ _id: id }).select("picture firstName lastName userName _id statu");
+        return { friend: friend[0], messages: obj.messages, _id: obj._id };
+      })
+    );
+    res.send(JSON.stringify({ result: chatsWithFriendInfo }));
+  } catch (error) {
+    console.log(error);
+    res.send(JSON.stringify({ result: error }));
+  }
+});
+
+app.post("/getFriends", auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    const friends = await User.find({ _id: { $in: user.friends } }).select("picture firstName lastName userName _id statu");
+
+    res.send(JSON.stringify({ result: friends }));
+  } catch (error) {
+    console.log(error);
+    res.send(JSON.stringify({ result: error }));
+  }
+});
+
 app.post("/getProfilePosts", async (req, res) => {
   try {
     const friendsPostsIds = await User.find({ _id: req.body.id }).select("posts picture firstName lastName userName _id");
@@ -236,7 +267,15 @@ app.post("/getSearchResult", async (req, res) => {
 
 app.post("/addFriend", auth, async (req, res) => {
   try {
-    const add = await User.updateOne({ _id: req.user.id }, { $addToSet: { friends: req.body.id } });
+    let chat = await Chat.find({ chatters: req.user.id, chatters: req.body.id });
+    console.log(chat);
+    if (!chat.length) {
+      chat = await Chat.insertMany([{ chatters: [req.body.id, req.user.id], messages: [] }]);
+    }
+    console.log(chat);
+    const add = await User.updateOne({ _id: req.user.id }, { $addToSet: { friends: req.body.id, chats: chat[0]._id } });
+    const test = await User.find({ _id: req.user.id });
+    console.log(req.user.id, req.body.id);
     res.send(JSON.stringify({ result: "done" }));
   } catch (error) {
     console.log(error);
@@ -246,7 +285,12 @@ app.post("/addFriend", auth, async (req, res) => {
 
 app.post("/removeFriend", auth, async (req, res) => {
   try {
-    const add = await User.updateOne({ _id: req.user.id }, { $pull: { friends: req.body.id } });
+    const chat = await Chat.find({ chatters: req.user.id, chatters: req.body.id });
+    if (chat[0].messages.length) {
+      const add = await User.updateOne({ _id: req.user.id }, { $pull: { friends: req.body.id } });
+    } else {
+      const add = await User.updateOne({ _id: req.user.id }, { $pull: { friends: req.body.id, chats: chat[0]._id } });
+    }
     res.send(JSON.stringify({ result: "done" }));
   } catch (error) {
     console.log(error);
@@ -340,6 +384,18 @@ app.post("/addCommentLike", auth, async (req, res) => {
   try {
     const addLike = await Comment.updateOne({ _id: req.body.commentId }, { $addToSet: { likes: req.user.id } });
     res.send(JSON.stringify({ result: addLike.modifiedCount ? "done" : "duplicate" }));
+  } catch (error) {
+    console.log(error);
+    res.send(JSON.stringify({ result: "error in server" }));
+  }
+});
+
+app.post("/addMessage", auth, async (req, res) => {
+  try {
+    console.log(req.body);
+    const user = await User.findById(req.user.id);
+    const addMessage = await Chat.updateOne({ _id: req.body.chatId }, { $push: { messages: { ownerName: user.userName, ownerId: user._id, text: req.body.text } } });
+    res.send(JSON.stringify({ result: addMessage.modifiedCount ? "done" : "no" }));
   } catch (error) {
     console.log(error);
     res.send(JSON.stringify({ result: "error in server" }));

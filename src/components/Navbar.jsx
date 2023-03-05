@@ -91,14 +91,14 @@ function Navbar(props) {
                   }}
                 />
                 {duringSearch ? <i className="fa-solid fa-spinner position-absolute top-50 search-icon circle-animation"></i> : <i className="fa-solid fa-magnifying-glass position-absolute top-50 translate-middle-y search-icon" onClick={() => searchUser()}></i>}
-                <div
-                  className="search-result d-flex flex-column"
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                  }}
-                >
-                  {searchResult &&
-                    searchResult.map((item, index) => {
+                {searchResult.length ? (
+                  <div
+                    className="search-result d-flex flex-column"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                    }}
+                  >
+                    {searchResult.map((item, index) => {
                       if (item._id !== props.userInformation._id)
                         return (
                           <div key={index} className="d-flex justify-content-start align-items-center search-result-item">
@@ -137,7 +137,8 @@ function Navbar(props) {
                         );
                       else return;
                     })}
-                </div>
+                  </div>
+                ) : null}
               </form>
             </div>
             <div className="navbar-middle-middle d-flex">

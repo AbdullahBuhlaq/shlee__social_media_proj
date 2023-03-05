@@ -1,9 +1,9 @@
 const mongoose = require("mongoose");
-const Message = require("./Message");
+const messageSchema = require("./Message");
 
 const chatSchema = new mongoose.Schema({
   chatters: [mongoose.Schema.ObjectId],
-  messages: [mongoose.SchemaType.Message],
+  messages: [messageSchema],
 });
 
 const Chat = new mongoose.model("Chat", chatSchema);
