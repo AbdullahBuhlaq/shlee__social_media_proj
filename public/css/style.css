@@ -60,6 +60,10 @@ img:not(img[src^="/icon"]){
     cursor: pointer;
 }
 
+.w-0{
+    width: 0;
+}
+
 /* register page-------------------------------------------------------------------------------------------------------------------- */
 
 .fullback::before {    
@@ -209,6 +213,7 @@ img:not(img[src^="/icon"]){
     height: 200px;
     border-radius: 50%;
     animation: float 5s ease-in-out infinite;
+    object-fit: cover;
 }
 
 .waiting{
@@ -931,6 +936,7 @@ img:not(img[src^="/icon"]){
     aspect-ratio: 1 / 1;
     top: 25px;
     left: calc( 50% - 67.5px);
+    object-fit: cover;
 }
 
 .profile-options{
@@ -1067,6 +1073,7 @@ img:not(img[src^="/icon"]){
 
 .chat-item-middle>div{
     opacity: 0.75;
+    white-space: pre-line;
 }
 
 .chat-item-last{
@@ -1113,7 +1120,7 @@ img:not(img[src^="/icon"]){
 }
 
 .chat-body{
-    padding: 2% 9%;
+    padding: 2% 50px;
     overflow-y: auto;
 }
 
@@ -1123,17 +1130,24 @@ img:not(img[src^="/icon"]){
 
 .friend-message,
 .my-message{
+    white-space: pre-line;
+    word-break: break-word;
     width: max-content;
     max-width: 48%;
     height: max-content;
     background-color: #5665ca;
-    border-radius: 0 15px 15px 15px;
+    border-radius: 0 15px 15px 0;
     padding: 10px;
+    margin-top: 5px!important;
     position: relative;
 }
 
-.friend-message::after,
-.my-message::after{
+.friend-message.last-message{
+    border-radius: 0 15px 15px 15px;
+}
+
+.friend-message.first-message::after,
+.my-message.first-message::after{
     content: '';
     position: absolute;
     top: 0;
@@ -1155,16 +1169,34 @@ img:not(img[src^="/icon"]){
 
 .my-message{
     background-color: #b7bff7;
-    border-radius: 15px 0 15px 15px;
+    border-radius: 15px 0 0 15px;
     color: var(--navbar);
 }
 
-.my-message::after{
+.my-message.last-message{
+    border-radius: 15px 0 15px 15px;
+}
+
+.my-message.first-message::after{
     left: auto;
     right: -20px;
     background-image: radial-gradient(at 100% 100%, transparent 70%, #b7bff7 70%);
 }
 
+.user-picture-in-chat{
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 50%;
+    position: absolute;
+    top: 4px;
+    left: -45px;
+}
+
+.my-message>.user-picture-in-chat{
+    left: auto;
+    right: -45px;
+}
 
 
 .chat-footer{

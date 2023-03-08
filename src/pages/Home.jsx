@@ -1,7 +1,13 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
 import Posts from "../components/Posts";
 import Chat from "../components/Chat";
+import io from "socket.io-client";
+const socket = io.connect("http://localhost:3001", {
+  query: {
+    token: localStorage.getItem("token"),
+  },
+});
 
 function Home() {
   const [current, setCurrent] = useState(0);
@@ -10,6 +16,7 @@ function Home() {
   const [loadingChats, setLoadingChats] = useState(true);
   const [loggedIn, setLoggedIn] = useState(false);
   const [duringEditFriend, setDuringEditFriend] = useState([]);
+  const [newMessage, setNewMessag] = useState({});
 
   const requestOptions = {
     method: "POST",
@@ -64,13 +71,22 @@ function Home() {
       };
       let response = await fetch("/getChats", infoRequestOptions);
       let data = await response.json();
-      setChats(data.result);
+      let finalChats = {};
+      await Promise.all(
+        data.result.map(async (obj) => {
+          finalChats[obj._id] = { ...obj, scroll: -1 };
+        })
+      );
+      setChats({ ...finalChats });
+      data.result.map((room) => {
+        socket.emit("joinRoom", room._id);
+      });
       setLoadingChats(false);
     }
   }
   const [chats, setChats] = useState(() => {
     getChats();
-  }, []);
+  }, {});
 
   async function addFriend(id) {
     if (!userInformation.friends.includes(id)) {
@@ -85,10 +101,13 @@ function Home() {
       setDuringEditFriend([...duringEditFriend, id]);
       let response = await fetch("/addFriend", infoRequestOptions);
       let data = await response.json();
-      if (data.result === "done") setUserInformation({ ...userInformation, friends: [...userInformation.friends, id] });
-      let temp1 = duringEditFriend;
-      temp1.splice(temp1.indexOf(id), 1);
-      setDuringEditFriend(temp1);
+      if (data.result === "done") {
+        setUserInformation({ ...userInformation, friends: [...userInformation.friends, id] });
+        setChats({ ...chats, [data.newChat._id]: { ...data.newChat, scroll: -1 } });
+        socket.emit("joinRoom", data.newChat._id);
+      }
+      duringEditFriend.splice(duringEditFriend.indexOf(id), 1);
+      setDuringEditFriend([...duringEditFriend]);
     }
   }
 
@@ -106,34 +125,48 @@ function Home() {
       let response = await fetch("/removeFriend", infoRequestOptions);
       let data = await response.json();
       if (data.result === "done") {
-        let temp3 = userInformation.friends;
-        temp3.splice(temp3.indexOf(id), 1);
-        setUserInformation({ ...userInformation, friends: temp3 });
+        userInformation.friends.splice(userInformation.friends.indexOf(id), 1);
+        setUserInformation({ ...userInformation });
+        if (data.isNewChat) {
+          delete chats[data.chatId];
+          setChats({ ...chats });
+          socket.emit("leaveRoom", data.chatId);
+        }
       }
-      let temp2 = duringEditFriend;
-      temp2.splice(temp2.indexOf(id), 1);
-      setDuringEditFriend(temp2);
+      duringEditFriend.splice(duringEditFriend.indexOf(id), 1);
+      setDuringEditFriend([...duringEditFriend]);
     }
   }
 
-  async function addMessage(text, friendId, chatId, currentChat) {
+  useEffect(() => {
+    socket.on("receiveMessage", (data) => {
+      setNewMessag(data);
+    });
+  }, [socket]);
+
+  useEffect(() => {
+    if (newMessage) {
+      if (chats) {
+        chats[newMessage.chatId].messages.push({ ownerName: newMessage.ownerName, ownerId: newMessage.ownerId, text: newMessage.text, content: null, date: newMessage.date, sent: false, recieved: false, read: false });
+        setChats({ ...chats });
+      }
+    }
+  }, [newMessage]);
+
+  async function addMessage(text, friendId, chatId) {
     if (text) {
-      let token = localStorage.getItem("token");
-      let infoRequestOptions = {
-        ...requestOptions,
-        headers: { ...requestOptions.headers, "x-auth-token": token },
-        body: JSON.stringify({
+      const messageIndex = chats[chatId].messages.length;
+      chats[chatId].messages.push({ ownerName: userInformation.userName, ownerId: userInformation._id, text: text, content: null, date: "loading", sent: false, recieved: false, read: false });
+      setChats({ ...chats });
+      chats[chatId].messages[messageIndex].date = Date.now();
+      setChats({ ...chats });
+      socket.emit("sendMessage", {
+        body: {
           text: text,
           friendId: friendId,
           chatId: chatId,
-        }),
-      };
-      console.log('hello');
-      // chats[currentChat].messages.push({ownerName: userInformation.userName, ownerId: userInformation._id, text: text, content: null, date: Date.now, sent: false, recieved: false, read: false })
-      // setChats(chats)
-      let response = await fetch("/addMessage", infoRequestOptions);
-      let data = await response.json();
-      if (data.result === "done") console.log("done");
+        },
+      });
     }
   }
 

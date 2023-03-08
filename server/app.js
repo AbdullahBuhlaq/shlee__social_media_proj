@@ -1,5 +1,7 @@
 //jshint esversion:6
 const express = require("express");
+const http = require("http");
+const { Server } = require("socket.io");
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
 const cors = require("cors");
@@ -11,6 +13,7 @@ require("dotenv/config");
 
 //middleware
 const auth = require("./middleware/auth");
+const authWithSocket = require("./middleware/authWithSocket");
 
 //models
 const User = require("./models/User");
@@ -37,12 +40,18 @@ cloudinary.config({
 });
 
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "http://localhost:3000",
+  },
+});
 app.use(cors());
 app.use(express.json({ limit: "50mb" }));
 app.use(express.static("public"));
 app.use(bodyParser.urlencoded({ extended: true }));
 
-//////// server listen section ////////////////////////////////////////////////
+//////// app listen section ////////////////////////////////////////////////
 
 app.post("/register", async (req, res) => {
   try {
@@ -267,16 +276,14 @@ app.post("/getSearchResult", async (req, res) => {
 
 app.post("/addFriend", auth, async (req, res) => {
   try {
-    let chat = await Chat.find({ chatters: req.user.id, chatters: req.body.id });
-    console.log(chat);
+    let chat = await Chat.find({ chatters: { $all: [req.user.id, req.body.id] } });
     if (!chat.length) {
       chat = await Chat.insertMany([{ chatters: [req.body.id, req.user.id], messages: [] }]);
     }
-    console.log(chat);
-    const add = await User.updateOne({ _id: req.user.id }, { $addToSet: { friends: req.body.id, chats: chat[0]._id } });
-    const test = await User.find({ _id: req.user.id });
-    console.log(req.user.id, req.body.id);
-    res.send(JSON.stringify({ result: "done" }));
+    const myAdd = await User.updateOne({ _id: req.user.id }, { $addToSet: { friends: req.body.id, chats: chat[0]._id } });
+    const friendAdd = await User.updateOne({ _id: req.body.id }, { $addToSet: { chats: chat[0]._id } });
+    const friend = await User.find({ _id: req.body.id }).select("picture firstName lastName userName _id statu");
+    res.send(JSON.stringify({ result: "done", newChat: { friend: friend[0], messages: chat[0].messages, _id: chat[0]._id } }));
   } catch (error) {
     console.log(error);
     res.send(JSON.stringify({ result: "error in server" }));
@@ -285,13 +292,15 @@ app.post("/addFriend", auth, async (req, res) => {
 
 app.post("/removeFriend", auth, async (req, res) => {
   try {
-    const chat = await Chat.find({ chatters: req.user.id, chatters: req.body.id });
-    if (chat[0].messages.length) {
-      const add = await User.updateOne({ _id: req.user.id }, { $pull: { friends: req.body.id } });
+    const chat = await Chat.find({ chatters: { $all: [req.user.id, req.body.id] } });
+    if ((chat.length && chat[0].messages.length) || !chat.length) {
+      const remove = await User.updateOne({ _id: req.user.id }, { $pull: { friends: req.body.id } });
+      res.send(JSON.stringify({ result: "done", isNewChat: false }));
     } else {
-      const add = await User.updateOne({ _id: req.user.id }, { $pull: { friends: req.body.id, chats: chat[0]._id } });
+      const myRemove = await User.updateOne({ _id: req.user.id }, { $pull: { friends: req.body.id, chats: chat[0]._id } });
+      const friendRemove = await User.updateOne({ _id: req.user.id }, { $pull: { chats: chat[0]._id } });
+      res.send(JSON.stringify({ result: "done", isNewChat: true, chatId: chat[0]._id }));
     }
-    res.send(JSON.stringify({ result: "done" }));
   } catch (error) {
     console.log(error);
     res.send(JSON.stringify({ result: "error in server" }));
@@ -392,7 +401,6 @@ app.post("/addCommentLike", auth, async (req, res) => {
 
 app.post("/addMessage", auth, async (req, res) => {
   try {
-    console.log(req.body);
     const user = await User.findById(req.user.id);
     const addMessage = await Chat.updateOne({ _id: req.body.chatId }, { $push: { messages: { ownerName: user.userName, ownerId: user._id, text: req.body.text } } });
     res.send(JSON.stringify({ result: addMessage.modifiedCount ? "done" : "no" }));
@@ -403,5 +411,30 @@ app.post("/addMessage", auth, async (req, res) => {
 });
 
 app.listen(5000, () => {
-  console.log("Server Started on localhost:5000/ !!");
+  console.log("App is listening on port 5000");
+});
+
+//////// server listen section //////////////////////////////////////////////////////////////////////////////
+io.use(authWithSocket).on("connection", async (socket) => {
+  socket.on("joinRoom", async (data) => {
+    socket.join(data);
+  });
+
+  socket.on("leaveRoom", async (data) => {
+    socket.leave(data);
+  });
+
+  socket.on("sendMessage", async (data) => {
+    try {
+      const user = await User.findById(socket.user.id);
+      const addMessage = await Chat.updateOne({ _id: data.body.chatId }, { $push: { messages: { ownerName: user.userName, ownerId: user._id, text: data.body.text } } });
+      socket.to(data.body.chatId).emit("receiveMessage", { chatId: data.body.chatId, date: Date.now(), ownerName: user.userName, ownerId: user._id, text: data.body.text, from: socket.user.id });
+    } catch (error) {
+      console.log(error);
+    }
+  });
+});
+
+server.listen(3001, () => {
+  console.log("Server is listening on port 3001");
 });

@@ -1,13 +1,14 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import ChatItem from "./ChatItem";
-import FriendMessage from "./FriendMessage";
-import MyMessage from "./MyMessage";
+import ChatBody from "./ChatBody";
 import $ from "jquery";
+import { useNavigate } from "react-router-dom";
 
 function Chat(props) {
   const [text, setText] = useState("");
   const [newChat, setNewChat] = useState(false);
   const [currentChat, setCurrentChat] = useState(-1);
+  const navigate = useNavigate();
 
   return (
     <div className="body vw-100 flex-grow-1 d-flex">
@@ -21,23 +22,23 @@ function Chat(props) {
                 setNewChat(false);
               }}
             >
-              Back to Chat List
+              <i className="fa-solid fa-reply"></i> &nbsp; Back to Chat List
             </div>
-            {props.chats.map((chat, chatIndex) => {
-              if (chat.messages.length == 0 && props.userInformation.friends.includes(chat.friend._id))
+            {Object.keys(props.chats).map((chatKey, chatIndex) => {
+              if (props.chats[chatKey].messages.length == 0 && props.userInformation.friends.includes(props.chats[chatKey].friend._id))
                 return (
                   <ChatItem
                     key={chatIndex}
                     index={chatIndex}
-                    id={chat._id}
-                    firstName={chat.friend.firstName}
-                    lastName={chat.friend.lastName}
-                    picture={chat.friend.picture}
-                    lastMessage={"lorem sdlfkj sllkd ls"}
-                    lastMessageDate={"23:23 AM"}
-                    newMessageCount={chatIndex}
+                    id={chatKey}
+                    firstName={props.chats[chatKey].friend.firstName}
+                    lastName={props.chats[chatKey].friend.lastName}
+                    picture={props.chats[chatKey].friend.picture}
+                    lastMessage={"Send First Message"}
+                    lastMessageDate={""}
+                    newMessageCount={0}
                     onClick={() => {
-                      setCurrentChat(chatIndex);
+                      setCurrentChat(chatKey);
                     }}
                   />
                 );
@@ -45,33 +46,33 @@ function Chat(props) {
           </>
         ) : (
           <>
+            {Object.keys(props.chats).map((chatKey, chatIndex) => {
+              if (props.chats[chatKey].messages.length)
+                return (
+                  <ChatItem
+                    key={chatIndex}
+                    index={chatIndex}
+                    id={chatKey}
+                    firstName={props.chats[chatKey].friend.firstName}
+                    lastName={props.chats[chatKey].friend.lastName}
+                    picture={props.chats[chatKey].friend.picture}
+                    lastMessage={props.chats[chatKey].messages[props.chats[chatKey].messages.length - 1].text}
+                    lastMessageDate={props.chats[chatKey].messages[props.chats[chatKey].messages.length - 1].date}
+                    newMessageCount={0}
+                    onClick={() => {
+                      setCurrentChat(chatKey);
+                    }}
+                  />
+                );
+            })}
             <div
               className="start-new-chat flex-shrink-0 d-flex justify-content-center align-items-center"
               onClick={() => {
                 setNewChat(true);
               }}
             >
-              Start Chatting With New Friend
+              <i className="fa-regular fa-comment"></i>&nbsp;Start Chatting With New Friend
             </div>
-            {props.chats.map((chat, chatIndex) => {
-              if (chat.messages.length)
-                return (
-                  <ChatItem
-                    key={chatIndex}
-                    index={chatIndex}
-                    id={chat._id}
-                    firstName={chat.friend.firstName}
-                    lastName={chat.friend.lastName}
-                    picture={chat.friend.picture}
-                    lastMessage={chat.messages[chat.messages.length - 1].text}
-                    lastMessageDate={"23:23 AM"}
-                    newMessageCount={chatIndex}
-                    onClick={() => {
-                      setCurrentChat(chatIndex);
-                    }}
-                  />
-                );
-            })}
           </>
         )}
       </div>
@@ -82,8 +83,20 @@ function Chat(props) {
           <>
             <div className="chat-header w-100 d-flex">
               <div className="chat-header-photo h-100 w-0 flex-grow-1 d-flex align-items-center">
-                <img src={props.chats[currentChat].friend.picture ? props.chats[currentChat].friend.picture : "/profile-photo.webp"} alt="" />
-                <div className="d-flex flex-column justify-content-center">
+                <img
+                  className="cursor"
+                  src={props.chats[currentChat].friend.picture ? props.chats[currentChat].friend.picture : "/profile-photo.webp"}
+                  alt=""
+                  onClick={() => {
+                    navigate(`/profile/${props.chats[currentChat].friend._id}`);
+                  }}
+                />
+                <div
+                  className="d-flex flex-column justify-content-center cursor"
+                  onClick={() => {
+                    navigate(`/profile/${props.chats[currentChat].friend._id}`);
+                  }}
+                >
                   <span>
                     {props.chats[currentChat].friend.firstName} {props.chats[currentChat].friend.lastName}
                   </span>
@@ -97,13 +110,7 @@ function Chat(props) {
                 <i className="fa-solid fa-ellipsis-vertical"></i>
               </div>
             </div>
-            <div className="chat-body w-100 flex-grow-1 d-flex flex-column">
-              <FriendMessage />
-              {/* <MyMessage /> */}
-              {props.chats[currentChat].messages.map((message, messageIndex) => {
-                return <MyMessage key={messageIndex} messageIndex={messageIndex} text={message.text} date={message.date} />;
-              })}
-            </div>
+            <ChatBody currentChat={currentChat} chats={props.chats} setChats={props.setChats} userInformation={props.userInformation} />
             <div className="chat-footer w-100 d-flex align-items-center">
               <div className="align-self-end d-flex justify-content-center align-items-center">
                 <i className="fa-solid fa-paperclip"></i>
@@ -126,7 +133,9 @@ function Chat(props) {
                   <i
                     className="fa-solid fa-paper-plane"
                     onClick={() => {
-                      props.addMessage(text, props.chats[currentChat].friend._id, props.chats[currentChat]._id, currentChat);
+                      props.addMessage(text, props.chats[currentChat].friend._id, currentChat);
+                      setText("");
+                      $("#new-post-text").css("height", "28px");
                     }}
                   ></i>
                 </div>

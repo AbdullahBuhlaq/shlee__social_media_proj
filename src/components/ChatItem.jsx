@@ -1,3 +1,5 @@
+import calculateTime from "../functions/calculateTime";
+
 function ChatItem(props) {
   return (
     <div
@@ -16,8 +18,8 @@ function ChatItem(props) {
         <div>{props.lastMessage}</div>
       </div>
       <div className="chat-item-last d-flex flex-column justify-content-evenly align-items-center">
-        <span>{props.lastMessageDate}</span>
-        <div className="new-messages-number">{props.newMessageCount}</div>
+        {props.lastMessageDate ? <span>{calculateTime(props.lastMessageDate)}</span> : null}
+        {props.newMessageCount ? <div className="new-messages-number">{props.newMessageCount}</div> : null}
       </div>
     </div>
   );

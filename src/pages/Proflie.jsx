@@ -193,7 +193,7 @@ function Profile() {
                   }}
                 >
                   <div className="profile-cover flex-shrink-0">
-                    <img src="/profile.jpg" alt="" />
+                    <img src="/cover.jpg" alt="" />
                     <img className="profile-photo" src={profileInformation && profileInformation.picture ? profileInformation.picture : "/profile-photo.webp"} alt="" />
                   </div>
                   <div className="profile-options flex-shrink-0 d-flex justify-content-center">
