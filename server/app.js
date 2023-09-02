@@ -9,6 +9,7 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const cloudinary = require("cloudinary").v2;
 const fs = require("fs");
+const upload = require("express-fileupload");
 require("dotenv/config");
 
 //middleware
@@ -40,10 +41,12 @@ cloudinary.config({
 });
 
 const app = express();
+app.use(upload());
+
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:3000",
+    origin: "http://localhost:3001",
   },
 });
 app.use(cors());
@@ -307,6 +310,11 @@ app.post("/removeFriend", auth, async (req, res) => {
   }
 });
 
+app.post("/hello", async (req, res) => {
+  console.log(req.files, req.body);
+  res.send("hi");
+});
+
 app.post("/addLike", async (req, res) => {
   try {
     const add = await Post.updateOne({ _id: req.body.postId }, { $addToSet: { likes: req.body.userId } });
@@ -435,6 +443,6 @@ io.use(authWithSocket).on("connection", async (socket) => {
   });
 });
 
-server.listen(3001, () => {
-  console.log("Server is listening on port 3001");
+server.listen(3060, () => {
+  console.log("Server is listening on port 3060");
 });

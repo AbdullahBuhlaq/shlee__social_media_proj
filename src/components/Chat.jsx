@@ -71,7 +71,7 @@ function Chat(props) {
                 setNewChat(true);
               }}
             >
-              <i className="fa-regular fa-comment"></i>&nbsp;Start Chatting With New Friend
+              <i className="fa-regular fa-comment"></i>&nbsp;Start New Chat
             </div>
           </>
         )}

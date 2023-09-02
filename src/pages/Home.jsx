@@ -1,92 +1,67 @@
 import { useEffect, useState } from "react";
+import requestOptions from "../constants/requestOptions";
 import Navbar from "../components/Navbar";
 import Posts from "../components/Posts";
 import Chat from "../components/Chat";
 import io from "socket.io-client";
-const socket = io.connect("http://localhost:3001", {
+import { useNavigate } from "react-router-dom";
+const socket = io.connect("http://localhost:3060", {
   query: {
     token: localStorage.getItem("token"),
   },
 });
 
 function Home() {
+  const navigate = useNavigate();
   const [current, setCurrent] = useState(0);
-  const [loadingUser, setLoadingUser] = useState(true);
-  const [loadingPosts, setLoadingPosts] = useState(true);
-  const [loadingChats, setLoadingChats] = useState(true);
-  const [loggedIn, setLoggedIn] = useState(false);
+  const [loaded, setLoaded] = useState(false);
   const [duringEditFriend, setDuringEditFriend] = useState([]);
   const [newMessage, setNewMessag] = useState({});
-
-  const requestOptions = {
-    method: "POST",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    },
-    body: "",
-  };
+  const [userInformation, setUserInformation] = useState({});
+  const [posts, setPosts] = useState({});
+  const [chats, setChats] = useState({});
 
   async function getUserInformation() {
     let token = localStorage.getItem("token");
-    if (token) {
-      setLoggedIn(true);
-      let infoRequestOptions = {
-        ...requestOptions,
-        headers: { ...requestOptions.headers, "x-auth-token": token },
-      };
-      let response = await fetch("/getUserInformation", infoRequestOptions);
-      let data = await response.json();
-      setUserInformation(data.result);
-      setLoadingUser(false);
-    }
+    let infoRequestOptions = {
+      ...requestOptions,
+      headers: { ...requestOptions.headers, "x-auth-token": token },
+    };
+    let response = await fetch("/getUserInformation", infoRequestOptions);
+    let data = await response.json();
+    setUserInformation(data.result);
   }
-  const [userInformation, setUserInformation] = useState(() => {
-    getUserInformation();
-  }, {});
 
   async function getPosts() {
     let token = localStorage.getItem("token");
-    if (token) {
-      let infoRequestOptions = {
-        ...requestOptions,
-        headers: { ...requestOptions.headers, "x-auth-token": token },
-      };
-      let response = await fetch("/getPosts", infoRequestOptions);
-      let data = await response.json();
-      setPosts(data.result);
-      setLoadingPosts(false);
-    }
+    let infoRequestOptions = {
+      ...requestOptions,
+      headers: { ...requestOptions.headers, "x-auth-token": token },
+    };
+    let response = await fetch("/getPosts", infoRequestOptions);
+    let data = await response.json();
+    setPosts(data.result);
   }
-  const [posts, setPosts] = useState(() => {
-    getPosts();
-  }, {});
 
   async function getChats() {
     let token = localStorage.getItem("token");
-    if (token) {
-      let infoRequestOptions = {
-        ...requestOptions,
-        headers: { ...requestOptions.headers, "x-auth-token": token },
-      };
-      let response = await fetch("/getChats", infoRequestOptions);
-      let data = await response.json();
-      let finalChats = {};
-      await Promise.all(
-        data.result.map(async (obj) => {
-          finalChats[obj._id] = { ...obj, scroll: -1 };
-        })
-      );
-      setChats({ ...finalChats });
-      data.result.map((room) => {
-        socket.emit("joinRoom", room._id);
-      });
-      setLoadingChats(false);
-    }
+    let infoRequestOptions = {
+      ...requestOptions,
+      headers: { ...requestOptions.headers, "x-auth-token": token },
+    };
+    let response = await fetch("/getChats", infoRequestOptions);
+    let data = await response.json();
+    let finalChats = {};
+    await Promise.all(
+      data.result.map(async (obj) => {
+        finalChats[obj._id] = { ...obj, scroll: -1 };
+      })
+    );
+    setChats({ ...finalChats });
+    data.result.map((room) => {
+      socket.emit("joinRoom", room._id);
+    });
   }
-  const [chats, setChats] = useState(() => {
-    getChats();
-  }, {});
 
   async function addFriend(id) {
     if (!userInformation.friends.includes(id)) {
@@ -138,6 +113,18 @@ function Home() {
     }
   }
 
+  async function getInformation() {
+    await getUserInformation();
+    await getPosts();
+    await getChats();
+    setLoaded(true);
+  }
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    !token ? navigate("/login") : getInformation();
+  }, []);
+
   useEffect(() => {
     socket.on("receiveMessage", (data) => {
       setNewMessag(data);
@@ -145,7 +132,7 @@ function Home() {
   }, [socket]);
 
   useEffect(() => {
-    if (newMessage) {
+    if (loaded) {
       if (chats) {
         chats[newMessage.chatId].messages.push({ ownerName: newMessage.ownerName, ownerId: newMessage.ownerId, text: newMessage.text, content: null, date: newMessage.date, sent: false, recieved: false, read: false });
         setChats({ ...chats });
@@ -172,22 +159,12 @@ function Home() {
 
   return (
     <>
-      {loadingUser ? (
+      {!loaded ? (
         <span>loading</span>
       ) : (
         <div className="vh-100 d-flex flex-column">
-          <Navbar addFriend={addFriend} removeFriend={removeFriend} duringEditFriend={duringEditFriend} loggedIn={loggedIn} userInformation={userInformation} setUserInformation={setUserInformation} current={current} setCurrent={setCurrent} />
-          {!loggedIn ? (
-            <span>login</span>
-          ) : current === 0 ? (
-            <Posts addFriend={addFriend} removeFriend={removeFriend} duringEditFriend={duringEditFriend} loadingPosts={loadingPosts} posts={posts} setPosts={setPosts} userInformation={userInformation} setUserInformation={setUserInformation} />
-          ) : current === 1 ? (
-            <Chat loadingChats={loadingChats} userInformation={userInformation} chats={chats} setChats={setChats} addMessage={addMessage} />
-          ) : current === 2 ? (
-            "story"
-          ) : (
-            "trend"
-          )}
+          <Navbar addFriend={addFriend} removeFriend={removeFriend} duringEditFriend={duringEditFriend} userInformation={userInformation} setUserInformation={setUserInformation} current={current} setCurrent={setCurrent} />
+          {current === 0 ? <Posts addFriend={addFriend} removeFriend={removeFriend} duringEditFriend={duringEditFriend} posts={posts} setPosts={setPosts} userInformation={userInformation} setUserInformation={setUserInformation} /> : current === 1 ? <Chat userInformation={userInformation} chats={chats} setChats={setChats} addMessage={addMessage} /> : current === 2 ? "story" : "trend"}
         </div>
       )}
     </>
